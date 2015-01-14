@@ -34,3 +34,5 @@ atlassian-ide-plugin.xml
 *.sh
 .clover
 
+# Lucene index
+tweets
