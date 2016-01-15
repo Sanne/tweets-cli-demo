@@ -6,11 +6,13 @@
  */
 package org.hibernate.search.demos.tweets;
 
-import java.io.IOException;
+import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.misc.TermStats;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Sort;
 import org.apache.lucene.search.SortField;
 import org.apache.lucene.search.SortedNumericSortField;
+import org.hibernate.search.SearchFactory;
 import org.hibernate.search.jpa.FullTextEntityManager;
 import org.hibernate.search.jpa.FullTextQuery;
 import org.hibernate.search.query.dsl.QueryBuilder;
@@ -21,11 +23,11 @@ import org.hibernate.search.query.dsl.QueryBuilder;
  */
 public class ServiceImpl {
 
-	/**
-	 * this should be injected before use.
-	 */
-	public FullTextEntityManager fullTextEntityManager;
-	private QueryBuilder tweetQueryBuilder;
+	private final FullTextEntityManager fullTextEntityManager;
+
+	ServiceImpl(FullTextEntityManager fullTextEntityManager) {
+		this.fullTextEntityManager = fullTextEntityManager;
+	}
 
 	/**
 	 * creates a FullTextQuery for all tweets mentioning a specific word/technology in the message field.
@@ -57,43 +59,27 @@ public class ServiceImpl {
 	}
 
 	/**
-	 * This is the most complex case, and uses ScoredTerm to represent the return value.
-	 * I guess this is a practical way to make a tag cloud out of all indexed terms.
+	 * This is the most complex case, requiring 'low level' access to a Lucene IndexReader to
+	 * directly read frequency information from the index.
+	 * This is a practical way to make a tag cloud out of all most relevant indexed terms.
 	 * @param inField Will return only scoredTerms in the specified field
-	 * @param minimumFrequency a minimum threshold, can be used to reduce not very significant words (see analyzers and stopwords for better results).
-	 * @throws IOException
-	Set<ScoredTerm> mostFrequentlyUsedTerms(String inField, int minimumFrequency) throws IOException {
-		String internedFieldName = inField.intern();
+	 * @param numberOfResults how many terms should be returned, from the most frequent going down.
+	 */
+	TermStats[] mostFrequentlyUsedTerms(String inField, int numberOfResults) throws Exception {
 		SearchFactory searchFactory = fullTextEntityManager.getSearchFactory();
 		IndexReader indexReader = searchFactory.getIndexReaderAccessor().open( Tweet.class );
-		TreeSet<ScoredTerm> sortedTerms = new TreeSet<ScoredTerm>();
 		try {
-			TermEnum termEnum = indexReader.terms();
-			while ( termEnum.next() ) {
-				Term term = termEnum.term();
-				if ( internedFieldName != term.field() ) {
-					continue;
-				}
-				int docFreq = termEnum.docFreq();
-				if ( docFreq < minimumFrequency ) {
-					continue;
-				}
-				String text = term.text();
-				sortedTerms.add( new ScoredTerm( text, docFreq ) );
-			}
+			return org.apache.lucene.misc.HighFreqTerms.getHighFreqTerms(
+					indexReader, numberOfResults, inField,
+					new org.apache.lucene.misc.HighFreqTerms.DocFreqComparator() );
 		}
 		finally {
 			searchFactory.getIndexReaderAccessor().close( indexReader );
-			indexReader.close();
 		}
-		return sortedTerms;
-	}*/
+	}
 
 	private QueryBuilder getQueryBuilder() {
-		if ( tweetQueryBuilder == null ) {
-			tweetQueryBuilder = fullTextEntityManager.getSearchFactory().buildQueryBuilder().forEntity( Tweet.class ).get();
-		}
-		return tweetQueryBuilder;
+		return fullTextEntityManager.getSearchFactory().buildQueryBuilder().forEntity( Tweet.class ).get();
 	}
 
 }

@@ -6,6 +6,8 @@
  */
 package org.hibernate.search.demos.tweets;
 
+import java.util.UUID;
+
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
@@ -22,6 +24,7 @@ import org.hibernate.search.annotations.Index;
 import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.annotations.NumericField;
 import org.hibernate.search.annotations.Parameter;
+import org.hibernate.search.annotations.SortableField;
 import org.hibernate.search.annotations.TokenFilterDef;
 import org.hibernate.search.annotations.TokenizerDef;
 
@@ -46,7 +49,7 @@ import org.hibernate.search.annotations.TokenizerDef;
 @Entity
 public class Tweet {
 
-	private String id;
+	private UUID id;
 	private String message = "";
 	private String sender = "";
 	private long timestamp = 0L;
@@ -60,8 +63,8 @@ public class Tweet {
 	}
 
 	@Id @GeneratedValue
-	public String getId() { return id; }
-	public void setId(String id) { this.id = id; }
+	public UUID getId() { return id; }
+	public void setId(UUID id) { this.id = id; }
 
 	@Field
 	public String getMessage() { return message; }
@@ -73,6 +76,7 @@ public class Tweet {
 
 	@Field
 	@NumericField
+	@SortableField
 	public long getTimestamp() { return timestamp; }
 	public void setTimestamp(long timestamp) { this.timestamp = timestamp; }
 
