@@ -12,9 +12,9 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Sort;
 import org.apache.lucene.search.SortField;
 import org.apache.lucene.search.SortedNumericSortField;
+import org.hibernate.search.FullTextQuery;
+import org.hibernate.search.FullTextSession;
 import org.hibernate.search.SearchFactory;
-import org.hibernate.search.jpa.FullTextEntityManager;
-import org.hibernate.search.jpa.FullTextQuery;
 import org.hibernate.search.query.dsl.QueryBuilder;
 
 /**
@@ -23,10 +23,10 @@ import org.hibernate.search.query.dsl.QueryBuilder;
  */
 public class ServiceImpl {
 
-	private final FullTextEntityManager fullTextEntityManager;
+	private final FullTextSession fullTextSession;
 
-	ServiceImpl(FullTextEntityManager fullTextEntityManager) {
-		this.fullTextEntityManager = fullTextEntityManager;
+	ServiceImpl(FullTextSession fullTextSession) {
+		this.fullTextSession = fullTextSession;
 	}
 
 	/**
@@ -34,7 +34,7 @@ public class ServiceImpl {
 	 */
 	public FullTextQuery messagesMentioning(String keyword) {
 		Query query = getQueryBuilder().keyword().onField( "message" ).matching( keyword ).createQuery();
-		FullTextQuery fullTextQuery = fullTextEntityManager.createFullTextQuery( query );
+		FullTextQuery fullTextQuery = fullTextSession.createFullTextQuery( query );
 		return fullTextQuery;
 	}
 
@@ -43,7 +43,7 @@ public class ServiceImpl {
 	 */
 	public FullTextQuery messagesBy(String name) {
 		Query query = getQueryBuilder().keyword().onField( "sender" ).matching( name ).createQuery();
-		FullTextQuery fullTextQuery = fullTextEntityManager.createFullTextQuery( query );
+		FullTextQuery fullTextQuery = fullTextSession.createFullTextQuery( query );
 		return fullTextQuery;
 	}
 
@@ -53,7 +53,7 @@ public class ServiceImpl {
 	 */
 	public FullTextQuery allTweetsSortedByTime() {
 		Query query = getQueryBuilder().all().createQuery();
-		FullTextQuery fullTextQuery = fullTextEntityManager.createFullTextQuery( query );
+		FullTextQuery fullTextQuery = fullTextSession.createFullTextQuery( query );
 		fullTextQuery.setSort( new Sort( new SortedNumericSortField( "timestamp", SortField.Type.LONG ) ) );
 		return fullTextQuery;
 	}
@@ -66,7 +66,7 @@ public class ServiceImpl {
 	 * @param numberOfResults how many terms should be returned, from the most frequent going down.
 	 */
 	TermStats[] mostFrequentlyUsedTerms(String inField, int numberOfResults) throws Exception {
-		SearchFactory searchFactory = fullTextEntityManager.getSearchFactory();
+		SearchFactory searchFactory = fullTextSession.getSearchFactory();
 		IndexReader indexReader = searchFactory.getIndexReaderAccessor().open( Tweet.class );
 		try {
 			return org.apache.lucene.misc.HighFreqTerms.getHighFreqTerms(
@@ -79,7 +79,7 @@ public class ServiceImpl {
 	}
 
 	private QueryBuilder getQueryBuilder() {
-		return fullTextEntityManager.getSearchFactory().buildQueryBuilder().forEntity( Tweet.class ).get();
+		return fullTextSession.getSearchFactory().buildQueryBuilder().forEntity( Tweet.class ).get();
 	}
 
 }
