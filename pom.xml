@@ -4,12 +4,12 @@
     <groupId>org.hibernate.search.demos</groupId>
     <artifactId>tweets-cli-demo</artifactId>
     <version>0.0.2</version>
-    <name>Clever queries on a twitter model</name>
+    <name>Better queries on a twitter model</name>
     <description>Demo for advanced query features of Hibernate Search using a Twitter like domain model</description>
 
     <properties>
         <version.hibernate-search>5.5.2.Final</version.hibernate-search>
-        <version.hibernate-orm>5.0.7.Final</version.hibernate-orm>
+        <version.hibernate-orm>5.0.8.Final</version.hibernate-orm>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
@@ -37,6 +37,7 @@
             <groupId>org.jboss.narayana.jta</groupId>
             <artifactId>narayana-jta</artifactId>
             <version>5.2.0.Final</version>
+            <scope>provided</scope>
         </dependency>
 
         <!-- Testing dependencies -->

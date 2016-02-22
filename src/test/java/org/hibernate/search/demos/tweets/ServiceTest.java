@@ -8,7 +8,6 @@
 package org.hibernate.search.demos.tweets;
 
 import java.util.List;
-import java.util.Set;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
@@ -25,8 +24,10 @@ import org.hibernate.search.jpa.FullTextEntityManager;
 import org.hibernate.search.jpa.FullTextQuery;
 import org.hibernate.search.jpa.Search;
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 /**
@@ -35,10 +36,10 @@ import org.junit.Test;
  */
 public class ServiceTest {
 
-	private EntityManagerFactory entityManagerFactory;
+	private static EntityManagerFactory entityManagerFactory;
 
-	@Before
-	public void prepareTestData() throws Exception {
+	@BeforeClass
+	static public void prepareTestData() throws Exception {
 		entityManagerFactory = Persistence.createEntityManagerFactory("test-tweets");
 
 		EntityManager entityManager = entityManagerFactory.createEntityManager();
@@ -117,11 +118,19 @@ public class ServiceTest {
 		entityManager.close();
 	}
 
-	private void commitTransaction() throws Exception {
+	@Test
+	public void testIndexRebuild() throws Exception {
+		EntityManager entityManager = entityManagerFactory.createEntityManager();
+		FullTextEntityManager fullTextEntityManager = Search.getFullTextEntityManager( entityManagerFactory.createEntityManager() );
+		fullTextEntityManager.createIndexer(Tweet.class).startAndWait();
+		entityManager.close();
+	}
+
+	private static void commitTransaction() throws Exception {
 		extractJBossTransactionManager(entityManagerFactory).getTransaction().commit();
 	}
 
-	private void beginTransaction() throws Exception {
+	private static void beginTransaction() throws Exception {
 		extractJBossTransactionManager(entityManagerFactory).begin();
 	}
 
@@ -130,8 +139,8 @@ public class ServiceTest {
 		return sessionFactory.getServiceRegistry().getService( JtaPlatform.class ).retrieveTransactionManager();
 	}
 
-	@After
-	public void cleanData() throws Exception {
+	@AfterClass
+	public static void cleanData() throws Exception {
 		if (entityManagerFactory != null) entityManagerFactory.close();
 	}
 
